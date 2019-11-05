@@ -2028,6 +2028,13 @@ static void livepatch_strip_undefined_elements(struct kpatch_elf *kelf)
 		if (!is_rela_section(sec))
 			continue;
 
+		/* The rela groups in the .fixup sections vary in size.
+		 * Ignore them as they are unlikely to have any STN_UNDEF
+		 * symbols anyway.
+		 */
+		if (strstr(sec->name, ".fixup"))
+			continue;
+
 		/* only known, fixed-size entries can be stripped */
 		entry_size = get_section_entry_size(sec->base, kelf);
 		if (entry_size == 0)
