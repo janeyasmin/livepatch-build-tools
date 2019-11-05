@@ -1621,13 +1621,12 @@ static void kpatch_verify_patchability(struct kpatch_elf *kelf)
 		}
 
 		if (sec->include) {
-			if (!is_standard_section(sec) && !is_rela_section(sec) &&
-			    !is_debug_section(sec) && !is_special_section(sec)) {
-				if (!is_referenced_section(sec, kelf)) {
-					log_normal("section %s included, but not referenced\n",
-						   sec->name);
-					errs++;
-				}
+			if (is_rodata_section(sec) &&
+			    !is_special_section(sec) &&
+			    !is_referenced_section(sec, kelf)) {
+				log_normal(".rodata section %s included, but not referenced\n",
+					   sec->name);
+				errs++;
 			}
 
 			/* Check if a RELA section does not contain any entries with

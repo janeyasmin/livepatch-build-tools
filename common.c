@@ -249,6 +249,13 @@ int is_text_section(struct section *sec)
 		(sec->sh.sh_flags & SHF_EXECINSTR));
 }
 
+int is_rodata_section(struct section *sec)
+{
+	return sec->sh.sh_type == SHT_PROGBITS &&
+	       !(sec->sh.sh_flags & (SHF_EXECINSTR | SHF_WRITE)) &&
+	       !strncmp(sec->name, ".rodata", 7);
+}
+
 int is_debug_section(struct section *sec)
 {
 	char *name;
