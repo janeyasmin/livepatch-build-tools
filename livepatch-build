@@ -32,6 +32,7 @@ SKIP=
 DEPENDS=
 XEN_DEPENDS=
 PRELINK=
+STRIP=0
 XENSYMS=xen-syms
 
 warn() {
@@ -111,6 +112,28 @@ function build_special()
     unset LIVEPATCH_CAPTURE_DIR
 }
 
+strip_extra_symbols ()
+{
+    local -r FILE="$1"
+    local -a STRIP_CMD_OPTS=()
+    local -a SYM_PREFIX=("livepatch_load_data_"
+                         "livepatch_unload_data_"
+                         "livepatch_preapply_data_"
+                         "livepatch_apply_data_"
+                         "livepatch_postapply_data_"
+                         "livepatch_prerevert_data_"
+                         "livepatch_revert_data_"
+                         "livepatch_postrevert_data_")
+
+    STRIP_CMD_OPTS+=("-w")
+    for sym in "${SYM_PREFIX[@]}"; do
+        STRIP_CMD_OPTS+=("-N")
+        STRIP_CMD_OPTS+=("\"${sym}*\"")
+    done
+
+    strip "${STRIP_CMD_OPTS[@]}" "$FILE"
+}
+
 function create_patch()
 {
     echo "Extracting new and modified ELF sections..."
@@ -150,6 +173,7 @@ function create_patch()
     NEW_FILES=$(comm -23 <(cd patched/xen && find . -type f -name '*.o' | sort) <(cd original/xen && find . -type f -name '*.o' | sort))
     for i in $NEW_FILES; do
         cp "patched/$i" "output/$i"
+        [[ $STRIP -eq 1 ]] && strip --strip-unneeded "output/$i"
         CHANGED=1
     done
 
@@ -176,6 +200,8 @@ function create_patch()
         "${TOOLSDIR}"/prelink $debugopt output.o "${PATCHNAME}.livepatch" "$XENSYMS" &>> "${OUTPUT}/prelink.log" || die
     fi
 
+    strip_extra_symbols "${PATCHNAME}.livepatch"
+
     objcopy --add-section .livepatch.depends=depends.bin "${PATCHNAME}.livepatch"
     objcopy --set-section-flags .livepatch.depends=alloc,readonly "${PATCHNAME}.livepatch"
 
@@ -198,11 +224,12 @@ usage() {
     echo "        --depends          Required build-id" >&2
     echo "        --xen-depends      Required Xen build-id" >&2
     echo "        --prelink          Prelink" >&2
+    echo "        --strip            Remove all symbols that are not needed for relocation processing." >&2
 }
 
 find_tools || die "can't find supporting tools"
 
-options=$(getopt -o hs:p:c:o:j:k:d -l "help,srcdir:,patch:,config:,output:,cpus:,skip:,debug,xen-debug,xen-syms:,depends:,xen-depends:,prelink" -- "$@") || die "getopt failed"
+options=$(getopt -o hs:p:c:o:j:k:d -l "help,srcdir:,patch:,config:,output:,cpus:,skip:,debug,xen-debug,xen-syms:,depends:,xen-depends:,prelink,strip" -- "$@") || die "getopt failed"
 
 eval set -- "$options"
 
@@ -268,6 +295,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --prelink)
             PRELINK=--resolve
+            shift
+            ;;
+        --strip)
+            STRIP=1
             shift
             ;;
         --)
