@@ -2318,8 +2318,6 @@ int main(int argc, char *argv[])
 	kpatch_include_debug_sections(kelf_patched);
 	log_debug("Include hook elements\n");
 	kpatch_include_hook_elements(kelf_patched);
-	log_debug("Include standard string elements\n");
-	kpatch_include_standard_string_elements(kelf_patched);
 	log_debug("Include new globals\n");
 	new_globals_exist = kpatch_include_new_globals(kelf_patched);
 	log_debug("new_globals_exist = %d\n", new_globals_exist);
@@ -2336,6 +2334,8 @@ int main(int argc, char *argv[])
 
 	log_debug("Process special sections\n");
 	kpatch_process_special_sections(kelf_patched);
+	log_debug("Include standard string elements\n");
+	kpatch_include_standard_string_elements(kelf_patched);
 	log_debug("Strip undefined elements of known size\n");
 	livepatch_strip_undefined_elements(kelf_patched);
 	log_debug("Verify patchability\n");
