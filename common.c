@@ -256,6 +256,13 @@ int is_rodata_section(struct section *sec)
 	       !strncmp(sec->name, ".rodata", 7);
 }
 
+int is_init_section(struct section *sec)
+{
+	return sec->sh.sh_type == SHT_PROGBITS &&
+	       (sec->sh.sh_flags & SHF_ALLOC) &&
+	       !strncmp(sec->name, ".init", 5);
+}
+
 int is_debug_section(struct section *sec)
 {
 	char *name;

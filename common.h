@@ -149,6 +149,7 @@ struct symbol *find_symbol_by_name(struct list_head *list, const char *name);
 
 int is_text_section(struct section *sec);
 int is_rodata_section(struct section *sec);
+int is_init_section(struct section *sec);
 int is_debug_section(struct section *sec);
 int is_rela_section(struct section *sec);
 int is_standard_section(struct section *sec);

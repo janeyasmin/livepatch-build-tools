@@ -881,6 +881,19 @@ static void kpatch_mark_ignored_functions_same(struct kpatch_elf *kelf)
 	}
 }
 
+static void livepatch_ignore_init_sections(struct kpatch_elf *kelf)
+{
+	struct section *sec;
+
+	list_for_each_entry(sec, &kelf->sections, list) {
+		if (is_init_section(sec)) {
+			log_normal("WARNING: Explicitly ignoring .init section: %s\n",
+				   sec->name);
+			sec->ignore = 1;
+		}
+	}
+}
+
 static void kpatch_mark_ignored_sections(struct kpatch_elf *kelf)
 {
 	struct section *sec, *strsec, *ignoresec;
@@ -2278,6 +2291,8 @@ int main(int argc, char *argv[])
 	 * We access its sections via the twin pointers in the
 	 * section, symbol, and rela lists of kelf_patched.
 	 */
+	log_debug("Ignore .init sections\n");
+	livepatch_ignore_init_sections(kelf_patched);
 	log_debug("Mark ignored sections\n");
 	kpatch_mark_ignored_sections(kelf_patched);
 	log_debug("Compare correlated elements\n");
